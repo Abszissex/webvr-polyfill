@@ -237,9 +237,11 @@ CardboardVRDisplay.prototype.onResize_ = function(e) {
     // This will not be visible as long as the container element (e.g. body)
     // is set to 'overflow: hidden'.
     var padding = '0';
-    if (Util.isIOS()) {
-      padding = '0 10px 10px 0';
-    }
+    // I don't really see a point in adding the padding. on iPhone 6 vor example u always have the padding... disturbes VR-EXP
+    //
+    // if (Util.isIOS()) {
+    //   padding = '0 10px 10px 0';
+    // }
 
     var cssProperties = [
       'position: absolute',
