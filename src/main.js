@@ -65,6 +65,15 @@ window.WebVRConfig = Util.extend({
   // and gl.TEXTURE_BINDING_2D for texture unit 0.
   DIRTY_SUBMIT_FRAME_BINDINGS: false,
 
+  // A custom callback which will be called when the User triggers the back
+  // button in the CARDBOARD_UI
+  BACKACTION_CALLBACK: undefined,
+
+  // A list of additional viewers, if the two different CardboardViewers in
+  // the polyfill aren't enough. Can be choosen via the gear icon in the
+  // CARDBOARD_UI
+  ADDITIONAL_VIEWERS: undefined,
+
   // Disable wakelock so that the user can take care about it himself
   DISABLE_WAKELOCK: false
 }, window.WebVRConfig);
