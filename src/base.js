@@ -14,7 +14,7 @@
  */
 
 var Util = require('./util.js');
-var WakeLock = require('./wakelock.js');
+
 
 // Start at a higher number to reduce chance of conflict.
 var nextDisplayId = 1000;
@@ -69,7 +69,10 @@ function VRDisplay() {
   this.fullscreenChangeHandler_ = null;
   this.fullscreenErrorHandler_ = null;
 
-  this.wakelock_ = new WakeLock();
+  if (!WebVRConfig.DISABLE_WAKELOCK) {
+    var WakeLock = require('./wakelock.js');
+    this.wakelock_ = new WakeLock();
+  }
 }
 
 VRDisplay.prototype.getFrameData = function(frameData) {
@@ -266,7 +269,9 @@ VRDisplay.prototype.requestPresent = function(layers) {
             screen.orientation.unlock();
           }
           self.removeFullscreenWrapper();
-          self.wakelock_.release();
+          if (self.wakelock_) {
+            self.wakelock_.release();
+          }
           self.endPresent_();
           self.removeFullscreenListeners_();
         }
@@ -279,8 +284,9 @@ VRDisplay.prototype.requestPresent = function(layers) {
 
         self.removeFullscreenWrapper();
         self.removeFullscreenListeners_();
-
-        self.wakelock_.release();
+        if (self.wakelock_) {
+          self.wakelock_.release();
+        }
         self.waitingForPresent_ = false;
         self.isPresenting = false;
 
@@ -291,11 +297,15 @@ VRDisplay.prototype.requestPresent = function(layers) {
           onFullscreenChange, onFullscreenError);
 
       if (Util.requestFullscreen(fullscreenElement)) {
-        self.wakelock_.request();
+        if (self.wakelock_) {
+          self.wakelock_.request();
+        }
         self.waitingForPresent_ = true;
       } else if (Util.isIOS()) {
         // *sigh* Just fake it.
-        self.wakelock_.request();
+        if (self.wakelock_) {
+          self.wakelock_.request();
+        }
         self.isPresenting = true;
         self.beginPresent_();
         self.fireVRDisplayPresentChange_();
@@ -315,7 +325,9 @@ VRDisplay.prototype.exitPresent = function() {
   var self = this;
   this.isPresenting = false;
   this.layer_ = null;
-  this.wakelock_.release();
+  if (this.wakelock_) {
+    this.wakelock_.release();
+  }
 
   return new Promise(function(resolve, reject) {
     if (wasPresenting) {

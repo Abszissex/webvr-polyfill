@@ -100,7 +100,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
  */
 
 var Util = _dereq_('./util.js');
-var WakeLock = _dereq_('./wakelock.js');
+
 
 // Start at a higher number to reduce chance of conflict.
 var nextDisplayId = 1000;
@@ -155,7 +155,10 @@ function VRDisplay() {
   this.fullscreenChangeHandler_ = null;
   this.fullscreenErrorHandler_ = null;
 
-  this.wakelock_ = new WakeLock();
+  if (!WebVRConfig.DISABLE_WAKELOCK) {
+    var WakeLock = _dereq_('./wakelock.js');
+    this.wakelock_ = new WakeLock();
+  }
 }
 
 VRDisplay.prototype.getFrameData = function(frameData) {
@@ -352,7 +355,9 @@ VRDisplay.prototype.requestPresent = function(layers) {
             screen.orientation.unlock();
           }
           self.removeFullscreenWrapper();
-          self.wakelock_.release();
+          if (self.wakelock_) {
+            self.wakelock_.release();
+          }
           self.endPresent_();
           self.removeFullscreenListeners_();
         }
@@ -365,8 +370,9 @@ VRDisplay.prototype.requestPresent = function(layers) {
 
         self.removeFullscreenWrapper();
         self.removeFullscreenListeners_();
-
-        self.wakelock_.release();
+        if (self.wakelock_) {
+          self.wakelock_.release();
+        }
         self.waitingForPresent_ = false;
         self.isPresenting = false;
 
@@ -377,11 +383,15 @@ VRDisplay.prototype.requestPresent = function(layers) {
           onFullscreenChange, onFullscreenError);
 
       if (Util.requestFullscreen(fullscreenElement)) {
-        self.wakelock_.request();
+        if (self.wakelock_) {
+          self.wakelock_.request();
+        }
         self.waitingForPresent_ = true;
       } else if (Util.isIOS()) {
         // *sigh* Just fake it.
-        self.wakelock_.request();
+        if (self.wakelock_) {
+          self.wakelock_.request();
+        }
         self.isPresenting = true;
         self.beginPresent_();
         self.fireVRDisplayPresentChange_();
@@ -401,7 +411,9 @@ VRDisplay.prototype.exitPresent = function() {
   var self = this;
   this.isPresenting = false;
   this.layer_ = null;
-  this.wakelock_.release();
+  if (this.wakelock_) {
+    this.wakelock_.release();
+  }
 
   return new Promise(function(resolve, reject) {
     if (wasPresenting) {
@@ -1721,12 +1733,13 @@ CardboardVRDisplay.prototype.onResize_ = function(e) {
     // hide the URL bar unless content is bigger than the screen.
     // This will not be visible as long as the container element (e.g. body)
     // is set to 'overflow: hidden'.
-    var padding;
-    if (Util.isIOS()) {
-      padding = '0 10px 10px 0';
-    } else {
-      padding = '0';
-    }
+    var padding = '0';
+    // I don't really see a point in adding the padding. on iPhone 6 vor example u always have the padding... disturbes VR-EXP
+    //
+    // if (Util.isIOS()) {
+    //   padding = '0 10px 10px 0';
+    // }
+
     var cssProperties = [
       'position: absolute',
       'top: 0',
@@ -3636,7 +3649,7 @@ Dpdb.prototype.recalculateDeviceParams_ = function() {
       this.onDeviceParamsUpdated(this.deviceParams);
     }
   } else {
-    console.error('Failed to recalculate device parameters.');
+    console.warn('Failed to recalculate device parameters.');
   }
 };
 
@@ -3853,7 +3866,19 @@ window.WebVRConfig = Util.extend({
   // Dirty bindings include: gl.FRAMEBUFFER_BINDING, gl.CURRENT_PROGRAM,
   // gl.ARRAY_BUFFER_BINDING, gl.ELEMENT_ARRAY_BUFFER_BINDING,
   // and gl.TEXTURE_BINDING_2D for texture unit 0.
-  DIRTY_SUBMIT_FRAME_BINDINGS: false
+  DIRTY_SUBMIT_FRAME_BINDINGS: false,
+
+  // A custom callback which will be called when the User triggers the back
+  // button in the CARDBOARD_UI
+  BACKACTION_CALLBACK: undefined,
+
+  // A list of additional viewers, if the two different CardboardViewers in
+  // the polyfill aren't enough. Can be choosen via the gear icon in the
+  // CARDBOARD_UI
+  ADDITIONAL_VIEWERS: undefined,
+
+  // Disable wakelock so that the user can take care about it himself
+  DISABLE_WAKELOCK: false
 }, window.WebVRConfig);
 
 if (!window.WebVRConfig.DEFER_INITIALIZATION) {

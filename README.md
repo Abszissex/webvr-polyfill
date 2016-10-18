@@ -111,7 +111,11 @@ WebVRConfig = {
         -0.58821183, 0.5733938, -0.48303202, 0.33299083, -0.17573841,
         0.0651772, -0.01488963, 0.001559834]
     }
-  ] // Default: undefined.
+  ], // Default: undefined.
+
+  // Disable wakelock so that the user can take care about it himself
+  DISABLE_WAKELOCK: true // Default: false
+
 }
 ```
 
