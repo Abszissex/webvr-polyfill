@@ -2030,7 +2030,7 @@ CardboardVRDisplay.prototype.onResize_ = function(e) {
       'height: ' + Math.min(screen.height, screen.width) + 'px',
       'border: 0',
       'margin: 0',
-      'padding: 0 10px 10px 0',
+      'padding: 0' // don't care about iPhone 5, iPhone 6 wouldn't work with this extra padding
     ];
     gl.canvas.setAttribute('style', cssProperties.join('; ') + ';');
 
